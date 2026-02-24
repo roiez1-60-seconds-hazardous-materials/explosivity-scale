@@ -2,791 +2,696 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 
 const GASES = {
-  general: { name: "כללי / חינוכי", nameEn: "General", lel: 5, uel: 15, formula: "—", description: "ערכים כלליים להדגמה", color: "#64748b" },
-  methane: { name: "מתאן", nameEn: "Methane", lel: 5.0, uel: 15.0, formula: "CH₄", description: "גז טבעי — דליק, חסר ריח וצבע", color: "#3b82f6" },
-  propane: { name: "פרופאן", nameEn: "Propane", lel: 2.1, uel: 9.5, formula: "C₃H₈", description: "גז בישול ותעשייה, כבד מאוויר", color: "#f59e0b" },
-  hydrogen: { name: "מימן", nameEn: "Hydrogen", lel: 4.0, uel: 75.0, formula: "H₂", description: "קל ביותר, טווח נפיצות רחב מאוד!", color: "#06b6d4" },
-  butane: { name: "בוטאן", nameEn: "Butane", lel: 1.8, uel: 8.4, formula: "C₄H₁₀", description: "גז מציתים, כבד מאוויר", color: "#a855f7" },
-  acetylene: { name: "אצטילן", nameEn: "Acetylene", lel: 2.5, uel: 100.0, formula: "C₂H₂", description: "גז ריתוך — מסוכן במיוחד!", color: "#ef4444" },
-  ethanol: { name: "אתנול", nameEn: "Ethanol", lel: 3.3, uel: 19.0, formula: "C₂H₅OH", description: "אדי אלכוהול דליקים", color: "#10b981" },
-  ammonia: { name: "אמוניה", nameEn: "Ammonia", lel: 15.0, uel: 28.0, formula: "NH₃", description: "גז רעיל ודליק, ריח חריף", color: "#f43f5e" },
-  co: { name: "פחמן חד חמצני", nameEn: "Carbon Monoxide", lel: 12.5, uel: 74.0, formula: "CO", description: "הרוצח השקט — רעיל וחסר ריח", color: "#6366f1" },
-  ethylene: { name: "אתילן", nameEn: "Ethylene", lel: 2.7, uel: 36.0, formula: "C₂H₄", description: "גז תעשייתי דליק", color: "#14b8a6" },
-  lpg: { name: 'גפ"מ', nameEn: "LPG Mix", lel: 1.8, uel: 9.5, formula: "C₃/C₄", description: 'תערובת גפ"מ — גז ביתי', color: "#f97316" },
-  hexane: { name: "הקסאן", nameEn: "Hexane", lel: 1.1, uel: 7.5, formula: "C₆H₁₄", description: "ממס תעשייתי נדיף", color: "#84cc16" },
+  general: { name: "כללי / חינוכי", nameEn: "General", lel: 5, uel: 15, formula: "—", un: "—", description: "ערכים כלליים להדגמה", color: "#6366f1" },
+  methane: { name: "מתאן", nameEn: "Methane", lel: 5.0, uel: 15.0, formula: "CH₄", un: "1971", description: "גז טבעי — דליק, חסר ריח וצבע", color: "#3b82f6" },
+  propane: { name: "פרופאן", nameEn: "Propane", lel: 2.1, uel: 9.5, formula: "C₃H₈", un: "1978", description: "גז בישול ותעשייה, כבד מאוויר", color: "#f59e0b" },
+  hydrogen: { name: "מימן", nameEn: "Hydrogen", lel: 4.0, uel: 75.0, formula: "H₂", un: "1049", description: "קל ביותר, טווח נפיצות רחב מאוד!", color: "#06b6d4" },
+  butane: { name: "בוטאן", nameEn: "Butane", lel: 1.8, uel: 8.4, formula: "C₄H₁₀", un: "1011", description: "גז מציתים, כבד מאוויר", color: "#8b5cf6" },
+  acetylene: { name: "אצטילן", nameEn: "Acetylene", lel: 2.5, uel: 100.0, formula: "C₂H₂", un: "1001", description: "גז ריתוך — מסוכן במיוחד!", color: "#ef4444" },
+  ethanol: { name: "אתנול (אדים)", nameEn: "Ethanol", lel: 3.3, uel: 19.0, formula: "C₂H₅OH", un: "1170", description: "אדי אלכוהול דליקים", color: "#10b981" },
+  ammonia: { name: "אמוניה", nameEn: "Ammonia", lel: 15.0, uel: 28.0, formula: "NH₃", un: "1005", description: "גז רעיל ודליק, ריח חריף", color: "#f43f5e" },
+  co: { name: "פחמן חד חמצני", nameEn: "Carbon Monoxide", lel: 12.5, uel: 74.0, formula: "CO", un: "1016", description: "הרוצח השקט — רעיל וחסר ריח", color: "#6366f1" },
+  ethylene: { name: "אתילן", nameEn: "Ethylene", lel: 2.7, uel: 36.0, formula: "C₂H₄", un: "1962", description: "גז תעשייתי דליק", color: "#14b8a6" },
+  lpg: { name: 'גפ"מ', nameEn: "LPG Mix", lel: 1.8, uel: 9.5, formula: "C₃/C₄", un: "1075", description: 'תערובת גפ"מ — גז ביתי', color: "#f97316" },
+  hexane: { name: "הקסאן", nameEn: "Hexane", lel: 1.1, uel: 7.5, formula: "C₆H₁₄", un: "1208", description: "ממס תעשייתי נדיף", color: "#84cc16" },
 };
 
-const ZONE_COLORS = {
-  safe: { bg: "#059669", glow: "#06d67d", label: "בטוח", icon: "✓", labelEn: "SAFE" },
-  caution: { bg: "#d97706", glow: "#fbbf24", label: "זהירות — 10% LEL", icon: "⚠", labelEn: "CAUTION" },
-  warning: { bg: "#ea580c", glow: "#fb923c", label: "אזהרה — 20% LEL", icon: "⚠", labelEn: "WARNING" },
-  preLel: { bg: "#dc2626", glow: "#f87171", label: "סכנה — מתקרב ל-LEL", icon: "⛔", labelEn: "DANGER" },
-  explosive: { bg: "#dc2626", glow: "#ff0040", label: "טווח נפיצות!", icon: "💥", labelEn: "EXPLOSIVE" },
-  rich: { bg: "#7c3aed", glow: "#a78bfa", label: "עשיר מדי — מעל UEL", icon: "🚫", labelEn: "TOO RICH" },
+const ZONES = {
+  safe:      { bg: "#34d399", bgLight: "#d1fae5", text: "#065f46", label: "בטוח",              labelEn: "SAFE",      icon: "✅" },
+  caution:   { bg: "#fbbf24", bgLight: "#fef3c7", text: "#92400e", label: "זהירות — 10% LEL",  labelEn: "CAUTION",   icon: "⚠️" },
+  warning:   { bg: "#fb923c", bgLight: "#ffedd5", text: "#9a3412", label: "אזהרה — 20% LEL",   labelEn: "WARNING",   icon: "🟠" },
+  preLel:    { bg: "#f87171", bgLight: "#fee2e2", text: "#991b1b", label: "סכנה — קרוב ל-LEL", labelEn: "DANGER",    icon: "🔴" },
+  explosive: { bg: "#ef4444", bgLight: "#fee2e2", text: "#7f1d1d", label: "טווח נפיצות!",      labelEn: "EXPLOSIVE", icon: "💥" },
+  rich:      { bg: "#a78bfa", bgLight: "#ede9fe", text: "#5b21b6", label: "עשיר מדי — מעל UEL", labelEn: "TOO RICH", icon: "🟣" },
 };
 
-function getZone(concentration, gas) {
-  const lel10 = gas.lel * 0.1;
-  const lel20 = gas.lel * 0.2;
-  if (concentration <= lel10) return "safe";
-  if (concentration <= lel20) return "caution";
-  if (concentration <= gas.lel * 0.5) return "warning";
-  if (concentration <= gas.lel) return "preLel";
-  if (concentration <= gas.uel) return "explosive";
+function getZone(val, lel, uel) {
+  if (val <= lel * 0.1) return "safe";
+  if (val <= lel * 0.2) return "caution";
+  if (val <= lel * 0.5) return "warning";
+  if (val <= lel) return "preLel";
+  if (val <= uel) return "explosive";
   return "rich";
 }
 
-function formatConcentration(value) {
-  if (value < 0.1) return `${(value * 10000).toFixed(0)} ppm`;
-  if (value < 1) return `${(value * 10000).toFixed(0)} ppm (${value.toFixed(2)}%)`;
-  return `${value.toFixed(2)}% vol`;
+function fmt(v) {
+  if (v === 0) return "0 ppm";
+  if (v < 0.01) return (v * 10000).toFixed(1) + " ppm";
+  if (v < 1) return (v * 10000).toFixed(0) + " ppm (" + v.toFixed(3) + "%)";
+  return v.toFixed(2) + "% vol";
+}
+
+const ZOOM_LEVELS = [
+  { label: "0–100%", id: "full" },
+  { label: "טווח נפיצות", id: "range" },
+  { label: "אזור התראות", id: "alarms" },
+];
+
+function playAlarm10() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880; o.type = "sine";
+    g.gain.setValueAtTime(0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+function playAlarm20() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < 3; i++) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 1200; o.type = "square";
+      g.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.2);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.15);
+      o.start(ctx.currentTime + i * 0.2); o.stop(ctx.currentTime + i * 0.2 + 0.15);
+    }
+  } catch(e) {}
+}
+
+function tryVibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e) {}
 }
 
 export default function Home() {
   const [selectedGas, setSelectedGas] = useState("general");
   const [concentration, setConcentration] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState("full");
   const [showGasMenu, setShowGasMenu] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
+  const [isEducational, setIsEducational] = useState(false);
+  const [customLel, setCustomLel] = useState(5);
+  const [customUel, setCustomUel] = useState(15);
+  const [manualInput, setManualInput] = useState("");
+  const [flashScreen, setFlashScreen] = useState(false);
+  const [showAlert10, setShowAlert10] = useState(false);
+  const [showAlert20, setShowAlert20] = useState(false);
 
-  useEffect(() => { setAnimateIn(true); }, []);
+  const prev10 = useRef(false);
+  const prev20 = useRef(false);
+
+  useEffect(function() { setAnimateIn(true); }, []);
 
   const gas = GASES[selectedGas];
-  const zone = getZone(concentration, gas);
-  const zoneInfo = ZONE_COLORS[zone];
+  const activeLel = isEducational ? customLel : gas.lel;
+  const activeUel = isEducational ? customUel : gas.uel;
+  const zone = getZone(concentration, activeLel, activeUel);
+  const zoneInfo = ZONES[zone];
 
-  const maxScale = useMemo(() => {
-    if (isZoomed) return Math.min(Math.max(gas.uel * 1.8, gas.lel * 5), 100);
-    return 100;
-  }, [gas, isZoomed]);
+  useEffect(function() {
+    var at10 = concentration >= activeLel * 0.1;
+    var at20 = concentration >= activeLel * 0.2;
 
-  const lel10Pct = (gas.lel * 0.1 / maxScale) * 100;
-  const lel20Pct = (gas.lel * 0.2 / maxScale) * 100;
-  const lelPct = (gas.lel / maxScale) * 100;
-  const uelPct = Math.min((gas.uel / maxScale) * 100, 100);
-  const sliderPct = (concentration / maxScale) * 100;
+    if (at10 && !prev10.current) {
+      playAlarm10();
+      tryVibrate([200]);
+      setShowAlert10(true);
+      setTimeout(function() { setShowAlert10(false); }, 2000);
+    }
+    if (at20 && !prev20.current) {
+      playAlarm20();
+      tryVibrate([100, 50, 100, 50, 300]);
+      setFlashScreen(true);
+      setShowAlert20(true);
+      setTimeout(function() { setFlashScreen(false); setShowAlert20(false); }, 2500);
+    }
+    prev10.current = at10;
+    prev20.current = at20;
+  }, [concentration, activeLel]);
 
-  const handleGasChange = useCallback((gasKey) => {
-    setSelectedGas(gasKey);
+  const scaleRange = useMemo(function() {
+    if (zoomLevel === "alarms") return { minScale: 0, maxScale: Math.ceil(activeLel * 1.5 * 100) / 100 };
+    if (zoomLevel === "range") {
+      var lo = Math.max(0, Math.floor(activeLel * 0.5 * 100) / 100);
+      var hi = Math.min(100, Math.ceil(activeUel * 1.3 * 100) / 100);
+      return { minScale: lo, maxScale: hi };
+    }
+    return { minScale: 0, maxScale: 100 };
+  }, [activeLel, activeUel, zoomLevel]);
+
+  var minScale = scaleRange.minScale;
+  var maxScale = scaleRange.maxScale;
+
+  var toPct = useCallback(function(v) {
+    var range = maxScale - minScale;
+    if (range <= 0) return 0;
+    return Math.max(0, Math.min(100, ((v - minScale) / range) * 100));
+  }, [minScale, maxScale]);
+
+  var lel10Pct = toPct(activeLel * 0.1);
+  var lel20Pct = toPct(activeLel * 0.2);
+  var lelPct   = toPct(activeLel);
+  var uelPct   = toPct(activeUel);
+  var sliderPct = toPct(concentration);
+
+  var handleGasChange = useCallback(function(k) {
+    setSelectedGas(k);
     setConcentration(0);
     setShowGasMenu(false);
+    setIsEducational(false);
+    prev10.current = false;
+    prev20.current = false;
   }, []);
 
-  const lelPercent10 = gas.lel * 0.1;
-  const lelPercent20 = gas.lel * 0.2;
-
-  const scaleMarks = useMemo(() => {
-    const marks = [];
-    const step = maxScale <= 10 ? 1 : maxScale <= 30 ? 5 : maxScale <= 50 ? 10 : 20;
-    for (let i = 0; i <= maxScale; i += step) {
-      marks.push(i);
+  var handleManualSubmit = function() {
+    var v = parseFloat(manualInput);
+    if (!isNaN(v) && v >= minScale && v <= maxScale) {
+      setConcentration(v);
     }
-    if (!marks.includes(maxScale)) marks.push(maxScale);
+    setManualInput("");
+  };
+
+  var scaleMarks = useMemo(function() {
+    var range = maxScale - minScale;
+    var step = range <= 1 ? 0.1 : range <= 3 ? 0.5 : range <= 10 ? 1 : range <= 30 ? 5 : range <= 60 ? 10 : 20;
+    var marks = [];
+    var v = Math.ceil(minScale / step) * step;
+    if (v - minScale > step * 0.3) marks.push(Math.round(minScale * 100) / 100);
+    while (v <= maxScale + step * 0.01) {
+      marks.push(Math.round(v * 100) / 100);
+      v += step;
+    }
+    if (maxScale - marks[marks.length - 1] > step * 0.3) marks.push(Math.round(maxScale * 100) / 100);
     return marks;
-  }, [maxScale]);
+  }, [minScale, maxScale]);
+
+  var barSegments = useMemo(function() {
+    var segs = [];
+    var pts = [
+      { pct: 0,       color: "#34d399" },
+      { pct: lel10Pct, color: "#fbbf24" },
+      { pct: lel20Pct, color: "#fb923c" },
+      { pct: lelPct,   color: "#ef4444" },
+      { pct: uelPct,   color: "#a78bfa" },
+      { pct: 100,      color: null },
+    ];
+    for (var i = 0; i < pts.length - 1; i++) {
+      var w = pts[i + 1].pct - pts[i].pct;
+      if (w > 0.1) segs.push({ start: pts[i].pct, width: w, color: pts[i].color });
+    }
+    return segs;
+  }, [lel10Pct, lel20Pct, lelPct, uelPct]);
+
+  var markers = useMemo(function() {
+    return [
+      { pct: lel10Pct, label: "10% LEL", color: "#d97706" },
+      { pct: lel20Pct, label: "20% LEL", color: "#ea580c" },
+      { pct: lelPct,   label: "LEL",     color: "#dc2626", bold: true },
+      { pct: uelPct,   label: "UEL",     color: "#7c3aed", bold: true },
+    ].filter(function(m) { return m.pct > 0.3 && m.pct < 99.7; });
+  }, [lel10Pct, lel20Pct, lelPct, uelPct]);
 
   return (
     <div style={{
       minHeight: "100vh",
-      background: "linear-gradient(145deg, #030712 0%, #0c1222 40%, #111827 100%)",
-      fontFamily: "'Rubik', 'SF Pro Display', -apple-system, sans-serif",
-      color: "#f1f5f9",
-      direction: "rtl",
-      padding: "0",
-      overflow: "hidden",
+      background: flashScreen
+        ? "linear-gradient(180deg, #fecaca 0%, #fee2e2 50%, #fecaca 100%)"
+        : "linear-gradient(180deg, #f0f4f8 0%, #e8ecf1 50%, #f0f4f8 100%)",
+      fontFamily: "'Rubik', -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif",
+      color: "#1e293b", direction: "rtl",
+      transition: "background 0.3s ease",
     }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-        @keyframes explosivePulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(239,68,68,0.3); }
-          50% { box-shadow: 0 0 40px rgba(239,68,68,0.7), 0 0 60px rgba(239,68,68,0.3); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.02); }
-        }
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-12px) scaleY(0.95); }
-          to { opacity: 1; transform: translateY(0) scaleY(1); }
-        }
-        @keyframes warningFlash {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
+      <style>{"\
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');\
+        * { box-sizing: border-box; margin: 0; padding: 0; }\
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }\
+        @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }\
+        @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.04); } }\
+        @keyframes flashBorder { 0%,100% { border-color:#fca5a5; } 50% { border-color:#ef4444; } }\
+        @keyframes alertSlideIn { from { opacity:0; transform:translateY(-20px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }\
+        @keyframes alertPulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }\
+        .card {\
+          background: rgba(255,255,255,0.88);\
+          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);\
+          border: 1px solid rgba(255,255,255,0.95);\
+          border-radius: 20px;\
+          box-shadow: 0 2px 20px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03);\
+        }\
+        input[type=range] {\
+          -webkit-appearance:none; appearance:none;\
+          width:100%; height:56px; background:transparent; cursor:pointer; z-index:10; position:relative;\
+        }\
+        input[type=range]::-webkit-slider-runnable-track { height:56px; background:transparent; border-radius:16px; }\
+        input[type=range]::-webkit-slider-thumb {\
+          -webkit-appearance:none; appearance:none;\
+          width:6px; height:72px; background:#1e293b; border-radius:3px; margin-top:-8px;\
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.95), 0 2px 10px rgba(0,0,0,0.3);\
+        }\
+        input[type=range]::-moz-range-thumb {\
+          width:6px; height:72px; background:#1e293b; border-radius:3px; border:none;\
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.95), 0 2px 10px rgba(0,0,0,0.3);\
+        }\
+        input[type=range]::-moz-range-track { height:56px; background:transparent; border-radius:16px; }\
+        .gas-btn {\
+          padding:10px 14px; border-radius:14px; border:1px solid #e2e8f0; background:white;\
+          color:#334155; cursor:pointer; transition:all 0.2s; font-family:inherit; font-size:13px;\
+          text-align:right; display:flex; align-items:center; gap:8px; width:100%;\
+        }\
+        .gas-btn:hover { background:#f8fafc; border-color:#cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.06); }\
+        .gas-btn.active { background:#eff6ff; border-color:#93c5fd; box-shadow:0 0 0 2px rgba(59,130,246,0.15); }\
+        .zoom-btn {\
+          padding:8px 16px; border-radius:12px; font-size:12px; font-weight:600;\
+          border:1px solid #e2e8f0; background:white; color:#64748b;\
+          cursor:pointer; transition:all 0.2s; font-family:inherit;\
+        }\
+        .zoom-btn:hover { background:#f8fafc; }\
+        .zoom-btn.active { background:#3b82f6; color:white; border-color:#3b82f6; box-shadow:0 2px 8px rgba(59,130,246,0.25); }\
+        .num-input {\
+          width:80px; padding:8px 10px; border-radius:10px; border:1px solid #e2e8f0;\
+          font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600;\
+          text-align:center; background:white; color:#0f172a; outline:none; transition:border-color 0.2s;\
+        }\
+        .num-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }\
+        .manual-input {\
+          width:120px; padding:8px 12px; border-radius:12px; border:1px solid #e2e8f0;\
+          font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:500;\
+          text-align:center; background:white; color:#0f172a; outline:none;\
+        }\
+        .manual-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }\
+      "}</style>
 
-        .glass-card {
-          background: rgba(255,255,255,0.04);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 20px;
-        }
-        .glass-card-bright {
-          background: rgba(255,255,255,0.07);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 20px;
-        }
-
-        input[type=range] {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 100%;
-          height: 52px;
-          background: transparent;
-          cursor: pointer;
-          position: relative;
-          z-index: 10;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-          height: 52px;
-          background: transparent;
-          border-radius: 16px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 8px;
-          height: 68px;
-          background: #ffffff;
-          border-radius: 4px;
-          margin-top: -8px;
-          box-shadow: 0 0 16px rgba(255,255,255,0.5), 0 0 32px rgba(255,255,255,0.2);
-          transition: box-shadow 0.2s;
-        }
-        input[type=range]::-webkit-slider-thumb:hover {
-          box-shadow: 0 0 24px rgba(255,255,255,0.8), 0 0 48px rgba(255,255,255,0.3);
-        }
-        input[type=range]::-moz-range-thumb {
-          width: 8px;
-          height: 68px;
-          background: #ffffff;
-          border-radius: 4px;
-          border: none;
-          box-shadow: 0 0 16px rgba(255,255,255,0.5);
-        }
-        input[type=range]::-moz-range-track {
-          height: 52px;
-          background: transparent;
-          border-radius: 16px;
-        }
-
-        .gas-btn {
-          padding: 10px 16px;
-          border-radius: 14px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.04);
-          color: #e2e8f0;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-family: inherit;
-          font-size: 14px;
-          text-align: right;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-        }
-        .gas-btn:hover {
-          background: rgba(255,255,255,0.1);
-          border-color: rgba(255,255,255,0.2);
-        }
-        .gas-btn.active {
-          background: rgba(59,130,246,0.15);
-          border-color: rgba(59,130,246,0.4);
-        }
-      `}</style>
-
-      {/* Background decorative elements */}
-      <div style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none", overflow: "hidden",
-      }}>
+      {showAlert10 && (
         <div style={{
-          position: "absolute", top: "-20%", right: "-10%", width: "500px", height: "500px",
-          background: `radial-gradient(circle, ${zoneInfo.glow}15, transparent 70%)`,
-          transition: "background 0.8s ease",
-        }} />
+          position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
+          padding:"14px 28px", borderRadius:16,
+          background:"linear-gradient(135deg, #fef3c7, #fffbeb)",
+          border:"2px solid #f59e0b",
+          boxShadow:"0 8px 32px rgba(245,158,11,0.3)",
+          animation:"alertSlideIn 0.3s ease-out",
+          display:"flex", alignItems:"center", gap:10, direction:"rtl",
+        }}>
+          <span style={{ fontSize:24 }}>⚠️</span>
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, color:"#92400e" }}>חציית 10% LEL!</div>
+            <div style={{ fontSize:12, color:"#b45309" }}>התראה ראשונה — חקור מקור דליפה</div>
+          </div>
+        </div>
+      )}
+      {showAlert20 && (
         <div style={{
-          position: "absolute", bottom: "-20%", left: "-10%", width: "400px", height: "400px",
-          background: "radial-gradient(circle, rgba(99,102,241,0.08), transparent 70%)",
-        }} />
-      </div>
+          position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
+          padding:"14px 28px", borderRadius:16,
+          background:"linear-gradient(135deg, #fee2e2, #fef2f2)",
+          border:"2px solid #ef4444",
+          boxShadow:"0 8px 32px rgba(239,68,68,0.3)",
+          animation:"alertSlideIn 0.3s ease-out, alertPulse 0.5s ease-in-out 3",
+          display:"flex", alignItems:"center", gap:10, direction:"rtl",
+        }}>
+          <span style={{ fontSize:24 }}>🚨</span>
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, color:"#991b1b" }}>חציית 20% LEL — פינוי!</div>
+            <div style={{ fontSize:12, color:"#dc2626" }}>הפעל אוורור, סגור מקורות הצתה!</div>
+          </div>
+        </div>
+      )}
 
       <div style={{
-        maxWidth: 860, margin: "0 auto", padding: "20px 20px 40px",
-        position: "relative", zIndex: 1,
-        opacity: animateIn ? 1 : 0, transform: animateIn ? "none" : "translateY(20px)",
-        transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+        maxWidth:880, margin:"0 auto", padding:"24px 20px 40px",
+        opacity: animateIn ? 1 : 0, transform: animateIn ? "none" : "translateY(16px)",
+        transition:"all 0.6s ease-out",
       }}>
 
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 28, paddingTop: 12 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 12,
-            animation: "fadeInUp 0.6s ease-out",
-          }}>
+        <div style={{ textAlign:"center", marginBottom:24, animation:"fadeInUp 0.5s ease-out" }}>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:12 }}>
             <div style={{
-              width: 48, height: 48, borderRadius: 14,
-              background: "linear-gradient(135deg, #ef4444, #f97316, #eab308)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 24, boxShadow: "0 4px 20px rgba(239,68,68,0.3)",
+              width:52, height:52, borderRadius:16,
+              background:"linear-gradient(135deg, #f97316, #ef4444, #dc2626)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:26, boxShadow:"0 4px 16px rgba(239,68,68,0.25)",
             }}>🔥</div>
             <div>
-              <h1 style={{
-                fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em",
-                background: "linear-gradient(135deg, #f8fafc, #94a3b8)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                lineHeight: 1.2,
-              }}>סקאלת טווח נפיצות</h1>
-              <p style={{
-                fontSize: 13, color: "#64748b", fontWeight: 400, marginTop: 2,
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>Flammability Range Scale</p>
+              <h1 style={{ fontSize:28, fontWeight:800, color:"#0f172a", letterSpacing:"-0.02em" }}>סקאלת טווח נפיצות</h1>
+              <p style={{ fontSize:13, color:"#94a3b8", fontFamily:"'JetBrains Mono',monospace", marginTop:2 }}>Flammability Range Scale</p>
             </div>
           </div>
         </div>
 
-        {/* Gas Selector */}
-        <div className="glass-card" style={{
-          padding: 16, marginBottom: 16,
-          animation: "fadeInUp 0.6s ease-out 0.1s both",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#94a3b8" }}>בחירת גז</span>
-            <button onClick={() => setShowGasMenu(!showGasMenu)} style={{
-              padding: "6px 14px", borderRadius: 10,
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
-              color: "#e2e8f0", cursor: "pointer", fontFamily: "inherit", fontSize: 13,
-              display: "flex", alignItems: "center", gap: 6,
-              transition: "all 0.2s",
+        <div className="card" style={{ padding:16, marginBottom:12, animation:"fadeInUp 0.5s ease-out 0.05s both" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: showGasMenu ? 12 : 0 }}>
+            <span style={{ fontSize:14, fontWeight:600, color:"#64748b" }}>בחירת גז</span>
+            <button onClick={function() { setShowGasMenu(!showGasMenu); }} style={{
+              padding:"8px 16px", borderRadius:12, background:"white", border:"1px solid #e2e8f0",
+              color:"#334155", cursor:"pointer", fontFamily:"inherit", fontSize:14, fontWeight:500,
+              display:"flex", alignItems:"center", gap:8,
+              boxShadow:"0 1px 4px rgba(0,0,0,0.05)", transition:"all 0.2s",
             }}>
-              <span style={{ fontSize: 11, opacity: 0.7 }}>{showGasMenu ? "▲" : "▼"}</span>
-              {gas.formula !== "—" && <span style={{
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: gas.color,
-              }}>{gas.formula}</span>}
+              <span style={{ width:10, height:10, borderRadius:"50%", background: gas.color }} />
               <span>{gas.name}</span>
+              {gas.formula !== "—" && <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"#94a3b8" }}>{gas.formula}</span>}
+              <span style={{ fontSize:10, color:"#94a3b8" }}>{showGasMenu ? "▲" : "▼"}</span>
             </button>
           </div>
 
           {showGasMenu && (
-            <div style={{
-              display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 6,
-              animation: "slideDown 0.3s ease-out",
-            }}>
-              {Object.entries(GASES).map(([key, g]) => (
-                <button key={key} className={`gas-btn ${key === selectedGas ? "active" : ""}`}
-                  onClick={() => handleGasChange(key)}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: "50%", background: g.color,
-                    boxShadow: key === selectedGas ? `0 0 8px ${g.color}` : "none",
-                    flexShrink: 0,
-                  }} />
-                  <span style={{ flex: 1 }}>{g.name}</span>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#64748b",
-                  }}>{g.formula}</span>
-                </button>
-              ))}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:6, animation:"slideDown 0.25s ease-out" }}>
+              {Object.entries(GASES).map(function([key, g]) {
+                return (
+                  <button key={key} className={"gas-btn" + (key === selectedGas ? " active" : "")} onClick={function() { handleGasChange(key); }}>
+                    <span style={{ width:10, height:10, borderRadius:"50%", background:g.color, flexShrink:0 }} />
+                    <span style={{ flex:1 }}>{g.name}</span>
+                    {g.un !== "—" && <span style={{ fontSize:10, color:"#94a3b8", fontFamily:"'JetBrains Mono',monospace" }}>UN{g.un}</span>}
+                    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#94a3b8" }}>{g.formula}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
+        </div>
 
-          {/* Selected gas info bar */}
+        <div className="card" style={{
+          padding:14, marginBottom:12, animation:"fadeInUp 0.5s ease-out 0.1s both",
+          display:"flex", alignItems:"center", gap:12, flexWrap:"wrap",
+        }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
-            marginTop: showGasMenu ? 12 : 0,
+            display:"flex", alignItems:"center", gap:8, flex:1, minWidth:200,
+            padding:"8px 12px", borderRadius:12, background:gas.color + "08", border:"1px solid " + gas.color + "20",
           }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8, flex: 1,
-              padding: "10px 14px", borderRadius: 12,
-              background: `linear-gradient(135deg, ${gas.color}12, ${gas.color}06)`,
-              border: `1px solid ${gas.color}30`,
-            }}>
-              <span style={{
-                width: 10, height: 10, borderRadius: "50%", background: gas.color,
-                boxShadow: `0 0 10px ${gas.color}60`,
-              }} />
-              <span style={{ fontSize: 13, color: "#cbd5e1" }}>{gas.description}</span>
+            <span style={{ width:8, height:8, borderRadius:"50%", background:gas.color }} />
+            <span style={{ fontSize:13, color:"#475569" }}>{gas.description}</span>
+            {gas.un !== "—" && <span style={{
+              fontSize:10, color:"#94a3b8", fontFamily:"'JetBrains Mono',monospace",
+              padding:"2px 6px", borderRadius:6, background:"#f1f5f9", marginRight:"auto",
+            }}>UN {gas.un}</span>}
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <div style={{ padding:"8px 14px", borderRadius:12, background:"#f5f3ff", border:"1px solid #ddd6fe", textAlign:"center" }}>
+              <div style={{ fontSize:10, color:"#7c3aed", fontWeight:700 }}>UEL</div>
+              <div style={{ fontSize:16, fontWeight:800, fontFamily:"'JetBrains Mono',monospace", color:"#7c3aed" }}>{activeUel}%</div>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{
-                padding: "8px 12px", borderRadius: 10, background: "rgba(239,68,68,0.1)",
-                border: "1px solid rgba(239,68,68,0.2)", textAlign: "center",
-              }}>
-                <div style={{ fontSize: 10, color: "#f87171", fontWeight: 600 }}>LEL</div>
-                <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {gas.lel}%
-                </div>
-              </div>
-              <div style={{
-                padding: "8px 12px", borderRadius: 10, background: "rgba(124,58,237,0.1)",
-                border: "1px solid rgba(124,58,237,0.2)", textAlign: "center",
-              }}>
-                <div style={{ fontSize: 10, color: "#a78bfa", fontWeight: 600 }}>UEL</div>
-                <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>
-                  {gas.uel}%
-                </div>
-              </div>
+            <div style={{ padding:"8px 14px", borderRadius:12, background:"#fef2f2", border:"1px solid #fecaca", textAlign:"center" }}>
+              <div style={{ fontSize:10, color:"#dc2626", fontWeight:700 }}>LEL</div>
+              <div style={{ fontSize:16, fontWeight:800, fontFamily:"'JetBrains Mono',monospace", color:"#dc2626" }}>{activeLel}%</div>
             </div>
           </div>
         </div>
 
-        {/* Zoom toggle */}
+        <div className="card" style={{ padding:14, marginBottom:12, animation:"fadeInUp 0.5s ease-out 0.12s both" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:16 }}>🎓</span>
+              <span style={{ fontSize:14, fontWeight:600, color:"#475569" }}>מצב חינוכי</span>
+              <span style={{ fontSize:11, color:"#94a3b8" }}>— הגדר LEL/UEL ידנית</span>
+            </div>
+            <button onClick={function() {
+              var next = !isEducational;
+              setIsEducational(next);
+              if (next) { setCustomLel(gas.lel); setCustomUel(gas.uel); }
+              setConcentration(0); prev10.current = false; prev20.current = false;
+            }} style={{
+              padding:"6px 18px", borderRadius:10, fontSize:13, fontWeight:600,
+              border: isEducational ? "1px solid #3b82f6" : "1px solid #e2e8f0",
+              background: isEducational ? "#3b82f6" : "white",
+              color: isEducational ? "white" : "#64748b",
+              cursor:"pointer", transition:"all 0.2s", fontFamily:"inherit",
+            }}>
+              {isEducational ? "פעיל ✓" : "הפעל"}
+            </button>
+          </div>
+
+          {isEducational && (
+            <div style={{ marginTop:12, display:"flex", alignItems:"center", gap:16, flexWrap:"wrap", animation:"slideDown 0.25s ease-out" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <label style={{ fontSize:13, fontWeight:600, color:"#dc2626" }}>LEL %</label>
+                <input type="number" className="num-input" value={customLel} min={0.1} max={99} step={0.1}
+                  onChange={function(e) { setCustomLel(parseFloat(e.target.value) || 0); setConcentration(0); prev10.current=false; prev20.current=false; }} />
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <label style={{ fontSize:13, fontWeight:600, color:"#7c3aed" }}>UEL %</label>
+                <input type="number" className="num-input" value={customUel} min={0.2} max={100} step={0.1}
+                  onChange={function(e) { setCustomUel(parseFloat(e.target.value) || 0); setConcentration(0); prev10.current=false; prev20.current=false; }} />
+              </div>
+            </div>
+          )}
+        </div>
+
         <div style={{
-          display: "flex", justifyContent: "flex-end", marginBottom: 8,
-          animation: "fadeInUp 0.6s ease-out 0.15s both",
+          display:"flex", gap:8, marginBottom:10, justifyContent:"space-between", alignItems:"center", flexWrap:"wrap",
+          animation:"fadeInUp 0.5s ease-out 0.15s both",
         }}>
-          <button onClick={() => { setIsZoomed(!isZoomed); setConcentration(0); }} style={{
-            padding: "6px 14px", borderRadius: 10, fontSize: 12,
-            background: isZoomed ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.05)",
-            border: `1px solid ${isZoomed ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.08)"}`,
-            color: isZoomed ? "#60a5fa" : "#94a3b8", cursor: "pointer",
-            fontFamily: "inherit", transition: "all 0.3s",
-            display: "flex", alignItems: "center", gap: 6,
-          }}>
-            <span>{isZoomed ? "🔍" : "🔎"}</span>
-            {isZoomed ? "תצוגה מלאה" : "זום לטווח נפיצות"}
-          </button>
+          <div style={{ display:"flex", gap:6 }}>
+            {ZOOM_LEVELS.map(function(z) {
+              return (
+                <button key={z.id} className={"zoom-btn" + (zoomLevel === z.id ? " active" : "")}
+                  onClick={function() { setZoomLevel(z.id); }}>
+                  {"🔎 " + z.label}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            <input type="text" className="manual-input" placeholder="הזן % vol"
+              value={manualInput} onChange={function(e) { setManualInput(e.target.value); }}
+              onKeyDown={function(e) { if (e.key === "Enter") handleManualSubmit(); }}
+              style={{ direction:"ltr" }}
+            />
+            <button onClick={handleManualSubmit} style={{
+              padding:"8px 14px", borderRadius:10, background:"#3b82f6", color:"white",
+              border:"none", cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"inherit",
+            }}>הזן</button>
+          </div>
         </div>
 
-        {/* Main Scale */}
-        <div className="glass-card-bright" style={{
-          padding: "24px 20px 16px", marginBottom: 16,
-          animation: zone === "explosive" 
-            ? "fadeInUp 0.6s ease-out 0.2s both, explosivePulse 2s ease-in-out infinite" 
-            : "fadeInUp 0.6s ease-out 0.2s both",
+        <div className="card" style={{
+          padding:"22px 20px 14px", marginBottom:12,
+          animation: zone === "explosive"
+            ? "fadeInUp 0.5s ease-out 0.2s both, flashBorder 1.5s ease-in-out infinite"
+            : "fadeInUp 0.5s ease-out 0.2s both",
+          borderColor: zone === "explosive" ? "#fca5a5" : undefined,
         }}>
-          <div style={{ marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 11, color: "#64748b", fontFamily: "'JetBrains Mono', monospace" }}>
-              0%
-            </span>
-            <span style={{ fontSize: 11, color: "#64748b", fontFamily: "'JetBrains Mono', monospace" }}>
-              {maxScale}% vol
-            </span>
-          </div>
-
-          {/* The scale bar */}
-          <div style={{ position: "relative", height: 52, marginBottom: 4 }}>
-            {/* Zone backgrounds */}
+          <div style={{ position:"relative", height:56, marginBottom:4, marginTop:24 }}>
             <div style={{
-              position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-              borderRadius: 16, overflow: "hidden", display: "flex",
+              position:"absolute", top:0, left:0, right:0, bottom:0,
+              borderRadius:16, overflow:"hidden", display:"flex", direction:"ltr",
+              boxShadow:"inset 0 2px 4px rgba(0,0,0,0.06)",
             }}>
-              {/* Safe zone: 0 to 10%LEL */}
-              <div style={{
-                width: `${lel10Pct}%`, background: "linear-gradient(90deg, #064e3b, #065f46)",
-                transition: "width 0.5s ease",
-              }} />
-              {/* Caution: 10%LEL to 20%LEL */}
-              <div style={{
-                width: `${Math.max(lel20Pct - lel10Pct, 0)}%`,
-                background: "linear-gradient(90deg, #713f12, #854d0e)",
-                transition: "width 0.5s ease",
-              }} />
-              {/* Warning: 20%LEL to LEL */}
-              <div style={{
-                width: `${Math.max(lelPct - lel20Pct, 0)}%`,
-                background: "linear-gradient(90deg, #9a3412, #c2410c)",
-                transition: "width 0.5s ease",
-              }} />
-              {/* Explosive: LEL to UEL */}
-              <div style={{
-                width: `${Math.max(uelPct - lelPct, 0)}%`,
-                background: zone === "explosive"
-                  ? "linear-gradient(90deg, #dc2626, #b91c1c, #991b1b, #dc2626)"
-                  : "linear-gradient(90deg, #991b1b, #7f1d1d)",
-                backgroundSize: zone === "explosive" ? "200% 100%" : "100% 100%",
-                animation: zone === "explosive" ? "shimmer 2s linear infinite" : "none",
-                transition: "width 0.5s ease",
-              }} />
-              {/* Too Rich: UEL to 100% */}
-              <div style={{
-                flex: 1,
-                background: "linear-gradient(90deg, #4c1d95, #2e1065, #1e1b4b)",
-                transition: "width 0.5s ease",
-              }} />
+              {barSegments.map(function(seg, i) {
+                return <div key={i} style={{ width:seg.width + "%", background:seg.color, transition:"width 0.4s ease", opacity:0.85 }} />;
+              })}
             </div>
 
-            {/* Marker lines */}
-            {[
-              { pct: lel10Pct, label: "10% LEL", color: "#fbbf24", value: lelPercent10 },
-              { pct: lel20Pct, label: "20% LEL", color: "#fb923c", value: lelPercent20 },
-              { pct: lelPct, label: "LEL", color: "#ef4444", value: gas.lel, bold: true },
-              { pct: uelPct, label: "UEL", color: "#a78bfa", value: gas.uel, bold: true },
-            ].filter(m => m.pct > 0 && m.pct < 100).map((marker, i) => (
-              <div key={i} style={{
-                position: "absolute",
-                left: `${marker.pct}%`,
-                top: 0, bottom: 0,
-                width: marker.bold ? 3 : 2,
-                background: marker.color,
-                opacity: 0.8,
-                zIndex: 5,
-                transition: "left 0.5s ease",
-              }}>
-                <div style={{
-                  position: "absolute",
-                  top: -22,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: marker.color,
-                  whiteSpace: "nowrap",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  textShadow: `0 0 8px ${marker.color}60`,
+            {markers.map(function(m, i) {
+              return (
+                <div key={i} style={{
+                  position:"absolute", left:m.pct + "%", top:-2, bottom:-2,
+                  width: m.bold ? 3 : 2, background:m.color, zIndex:5,
+                  transition:"left 0.4s ease", direction:"ltr", borderRadius:2,
                 }}>
-                  {marker.label}
+                  <div style={{
+                    position:"absolute", top:-24, left:"50%", transform:"translateX(-50%)",
+                    fontSize: m.bold ? 11 : 9, fontWeight:700, color:m.color,
+                    whiteSpace:"nowrap", fontFamily:"'JetBrains Mono',monospace",
+                    background:"rgba(255,255,255,0.9)", padding:"2px 6px", borderRadius:5,
+                    boxShadow:"0 1px 3px rgba(0,0,0,0.1)",
+                  }}>{m.label}</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
-            {/* Slider */}
-            <input
-              type="range"
-              min={0}
-              max={maxScale}
-              step={maxScale / 1000}
+            <input type="range" min={minScale} max={maxScale} step={(maxScale - minScale) / 2000}
               value={concentration}
-              onChange={(e) => setConcentration(parseFloat(e.target.value))}
-              style={{
-                position: "absolute", top: 0, left: 0, right: 0,
-                height: 52, direction: "ltr",
-              }}
+              onChange={function(e) { setConcentration(parseFloat(e.target.value)); }}
+              style={{ position:"absolute", top:0, left:0, right:0, height:56, direction:"ltr" }}
             />
 
-            {/* Current value indicator below slider */}
-            {concentration > 0 && (
+            {concentration > minScale && (
               <div style={{
-                position: "absolute",
-                left: `${sliderPct}%`,
-                bottom: -28,
-                transform: "translateX(-50%)",
-                fontSize: 11,
-                fontWeight: 600,
-                color: zoneInfo.glow,
-                whiteSpace: "nowrap",
-                fontFamily: "'JetBrains Mono', monospace",
-                textShadow: `0 0 8px ${zoneInfo.glow}80`,
-                transition: "color 0.3s, text-shadow 0.3s",
-                zIndex: 15,
+                position:"absolute", left:sliderPct + "%", bottom:-32,
+                transform:"translateX(-50%)", fontSize:12, fontWeight:700,
+                color:zoneInfo.text, whiteSpace:"nowrap",
+                fontFamily:"'JetBrains Mono',monospace",
+                background:zoneInfo.bgLight, padding:"3px 10px", borderRadius:8,
+                border:"1px solid " + zoneInfo.bg + "40",
+                zIndex:15, transition:"all 0.15s",
               }}>
-                {concentration < 1 ? `${(concentration * 10000).toFixed(0)} ppm` : `${concentration.toFixed(2)}%`}
+                {concentration < 1 ? (concentration * 10000).toFixed(0) + " ppm" : concentration.toFixed(2) + "%"}
               </div>
             )}
           </div>
 
-          {/* Scale ticks */}
-          <div style={{
-            display: "flex", justifyContent: "space-between", marginTop: 32,
-            direction: "ltr", padding: "0 2px",
-          }}>
-            {scaleMarks.map((mark, i) => (
-              <div key={i} style={{
-                fontSize: 9, color: "#475569",
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>
-                {mark}%
-              </div>
-            ))}
-          </div>
-
-          {/* ppm scale below */}
-          <div style={{
-            display: "flex", justifyContent: "space-between", marginTop: 2,
-            direction: "ltr", padding: "0 2px",
-          }}>
-            {scaleMarks.map((mark, i) => (
-              <div key={i} style={{
-                fontSize: 8, color: "#334155",
-                fontFamily: "'JetBrains Mono', monospace",
-              }}>
-                {mark * 10000 >= 1000000 ? `${(mark * 10000 / 1000000).toFixed(1)}M` :
-                  mark * 10000 >= 1000 ? `${(mark * 10000 / 1000).toFixed(0)}K` :
-                    `${mark * 10000}`}
-                <span style={{ fontSize: 7 }}> ppm</span>
-              </div>
-            ))}
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:40, direction:"ltr", padding:"0 2px" }}>
+            {scaleMarks.map(function(m, i) {
+              return <div key={i} style={{ fontSize:10, color:"#94a3b8", fontFamily:"'JetBrains Mono',monospace", fontWeight:500 }}>{m}%</div>;
+            })}
           </div>
         </div>
 
-        {/* Zone Legend Bar */}
         <div style={{
-          display: "flex", gap: 3, marginBottom: 16, borderRadius: 12, overflow: "hidden",
-          animation: "fadeInUp 0.6s ease-out 0.25s both", height: 28, direction: "ltr",
+          display:"flex", gap:3, marginBottom:12, borderRadius:14, overflow:"hidden",
+          animation:"fadeInUp 0.5s ease-out 0.25s both", height:30, direction:"ltr",
+          boxShadow:"0 2px 8px rgba(0,0,0,0.05)",
         }}>
           {[
-            { zone: "safe", label: "בטוח", width: `${lel10Pct}%` },
-            { zone: "caution", label: "10% LEL", width: `${lel20Pct - lel10Pct}%` },
-            { zone: "warning", label: "אזהרה", width: `${lelPct - lel20Pct}%` },
-            { zone: "explosive", label: "נפיץ!", width: `${uelPct - lelPct}%` },
-            { zone: "rich", label: "עשיר", width: `${100 - uelPct}%` },
-          ].map((z, i) => (
-            <div key={i} style={{
-              width: z.width, background: ZONE_COLORS[z.zone].bg,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)",
-              overflow: "hidden", whiteSpace: "nowrap",
-              borderRadius: i === 0 ? "8px 0 0 8px" : i === 4 ? "0 8px 8px 0" : 0,
-              transition: "all 0.5s ease",
-            }}>
-              {parseFloat(z.width) > 8 ? z.label : ""}
-            </div>
-          ))}
+            { label:"בטוח",   color:"#34d399", width:lel10Pct },
+            { label:"זהירות", color:"#fbbf24", width:lel20Pct - lel10Pct },
+            { label:"אזהרה",  color:"#fb923c", width:lelPct - lel20Pct },
+            { label:"נפיץ!",  color:"#ef4444", width:uelPct - lelPct },
+            { label:"עשיר",   color:"#a78bfa", width:100 - uelPct },
+          ].map(function(s, i) {
+            return (
+              <div key={i} style={{
+                width:Math.max(s.width, 0) + "%", background:s.color, display:"flex",
+                alignItems:"center", justifyContent:"center",
+                fontSize:10, fontWeight:700, color:"white",
+                overflow:"hidden", whiteSpace:"nowrap", transition:"all 0.4s ease",
+                textShadow:"0 1px 2px rgba(0,0,0,0.15)",
+              }}>
+                {s.width > 8 ? s.label : ""}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Status Card */}
-        <div className="glass-card-bright" style={{
-          padding: 20, marginBottom: 16,
-          animation: "fadeInUp 0.6s ease-out 0.3s both",
-          borderColor: `${zoneInfo.glow}25`,
-          transition: "border-color 0.5s ease",
+        <div className="card" style={{
+          padding:20, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.3s both",
+          borderColor: zone === "explosive" ? "#fca5a5" : undefined,
+          background: zone === "explosive" ? "rgba(254,242,242,0.92)" : undefined,
+          transition:"all 0.3s ease",
         }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-            {/* Zone indicator */}
+          <div style={{ display:"flex", gap:16, alignItems:"flex-start", flexWrap:"wrap" }}>
             <div style={{
-              width: 64, height: 64, borderRadius: 18,
-              background: `linear-gradient(135deg, ${zoneInfo.bg}40, ${zoneInfo.bg}20)`,
-              border: `2px solid ${zoneInfo.glow}40`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 28, flexShrink: 0,
-              boxShadow: `0 0 20px ${zoneInfo.glow}20`,
-              ...(zone === "explosive" ? { animation: "breathe 1.5s ease-in-out infinite" } : {}),
+              width:60, height:60, borderRadius:18,
+              background:zoneInfo.bgLight, border:"2px solid " + zoneInfo.bg + "40",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:28, flexShrink:0,
+              animation: zone === "explosive" ? "pulse 1.5s ease-in-out infinite" : "none",
             }}>
               {zoneInfo.icon}
             </div>
-
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <div style={{ flex:1, minWidth:200 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                <span style={{ fontSize:22, fontWeight:800, color:zoneInfo.text }}>{zoneInfo.label}</span>
                 <span style={{
-                  fontSize: 20, fontWeight: 800, color: zoneInfo.glow,
-                  textShadow: `0 0 20px ${zoneInfo.glow}40`,
-                  ...(zone === "explosive" ? { animation: "warningFlash 1s ease-in-out infinite" } : {}),
-                }}>{zoneInfo.label}</span>
-                <span style={{
-                  fontSize: 10, fontWeight: 600, color: "#64748b",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  padding: "2px 8px", borderRadius: 6,
-                  background: "rgba(255,255,255,0.05)",
+                  fontSize:10, fontWeight:600, color:"#94a3b8",
+                  fontFamily:"'JetBrains Mono',monospace",
+                  padding:"2px 8px", borderRadius:6, background:"#f1f5f9",
                 }}>{zoneInfo.labelEn}</span>
               </div>
-
-              <div style={{
-                fontSize: 28, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
-                color: "#f1f5f9", marginBottom: 4, lineHeight: 1,
-              }}>
-                {formatConcentration(concentration)}
+              <div style={{ fontSize:30, fontWeight:800, fontFamily:"'JetBrains Mono',monospace", color:"#0f172a", marginBottom:6 }}>
+                {fmt(concentration)}
               </div>
-
-              <div style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.6 }}>
-                {zone === "safe" && "ריכוז נמוך — אין סכנת התלקחות. המשך ניטור."}
-                {zone === "caution" && "חצית סף 10% LEL — התראה ראשונה בגלאי גזים. חקור מקור."}
+              <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7 }}>
+                {zone === "safe" && "ריכוז נמוך — אין סכנת התלקחות. המשך ניטור שוטף."}
+                {zone === "caution" && "חצית סף 10% LEL — התראה ראשונה בגלאי גזים. חקור מקור דליפה."}
                 {zone === "warning" && "חצית סף 20% LEL — התראת פינוי! הפעל אוורור, סגור מקורות הצתה."}
-                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! פנה מיידית וטפל ממרחק."}
-                {zone === "explosive" && "⚠ אתה בטווח הנפיצות! סכנת חיים מיידית — כל ניצוץ יגרום לפיצוץ!"}
+                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! פנה מיידית וטפל ממרחק בטוח."}
+                {zone === "explosive" && "⚠ אתה בטווח הנפיצות! סכנת חיים מיידית — כל ניצוץ עלול לגרום לפיצוץ!"}
                 {zone === "rich" && "מעל גבול הנפיצות העליון. עדיין מסוכן — תנאים עלולים להשתנות!"}
               </div>
             </div>
           </div>
 
-          {/* Quick stats */}
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-            gap: 8, marginTop: 16,
-          }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:8, marginTop:16 }}>
             {[
-              { label: "% מ-LEL", value: gas.lel > 0 ? `${((concentration / gas.lel) * 100).toFixed(1)}%` : "—", color: concentration >= gas.lel ? "#ef4444" : "#94a3b8" },
-              { label: "ריכוז ב-ppm", value: `${(concentration * 10000).toFixed(0)}`, color: "#60a5fa" },
-              { label: "ריכוז ב-% vol", value: `${concentration.toFixed(3)}%`, color: "#34d399" },
-              { label: "מרחק מ-LEL", value: concentration < gas.lel ? `${(gas.lel - concentration).toFixed(2)}%` : concentration <= gas.uel ? "בטווח!" : `+${(concentration - gas.uel).toFixed(2)}%`, color: concentration >= gas.lel && concentration <= gas.uel ? "#ef4444" : "#a78bfa" },
-            ].map((stat, i) => (
-              <div key={i} style={{
-                padding: "10px 12px", borderRadius: 12,
-                background: "rgba(0,0,0,0.2)", textAlign: "center",
-              }}>
-                <div style={{ fontSize: 9, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>{stat.label}</div>
-                <div style={{
-                  fontSize: 16, fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
-                  color: stat.color, transition: "color 0.3s",
-                }}>{stat.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Educational Legend */}
-        <div className="glass-card" style={{
-          padding: 18, marginBottom: 16,
-          animation: "fadeInUp 0.6s ease-out 0.35s both",
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#94a3b8", marginBottom: 12 }}>
-            מקרא אזורים
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { color: "#059669", label: "בטוח", desc: `0 — ${(gas.lel * 0.1).toFixed(2)}% vol (10% LEL)`, descEn: "Below 10% LEL — safe, continue monitoring" },
-              { color: "#d97706", label: "זהירות", desc: `${(gas.lel * 0.1).toFixed(2)}% — ${(gas.lel * 0.2).toFixed(2)}% vol`, descEn: "10-20% LEL — first alarm threshold" },
-              { color: "#ea580c", label: "אזהרה", desc: `${(gas.lel * 0.2).toFixed(2)}% — ${gas.lel}% vol (LEL)`, descEn: "20% LEL to LEL — evacuation zone" },
-              { color: "#dc2626", label: "טווח נפיצות", desc: `${gas.lel}% — ${gas.uel}% vol`, descEn: "LEL to UEL — explosive atmosphere!" },
-              { color: "#7c3aed", label: "עשיר מדי", desc: `${gas.uel}% — 100% vol`, descEn: "Above UEL — too rich to ignite" },
-            ].map((item, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{
-                  width: 14, height: 14, borderRadius: 5, background: item.color, flexShrink: 0,
-                  boxShadow: `0 0 8px ${item.color}40`,
-                }} />
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>{item.label}</span>
-                  <span style={{ fontSize: 11, color: "#64748b", marginRight: 8 }}> — {item.desc}</span>
-                  <div style={{ fontSize: 10, color: "#475569", fontFamily: "'JetBrains Mono', monospace" }}>
-                    {item.descEn}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Detector Alarms Reference */}
-        <div className="glass-card" style={{
-          padding: 18, marginBottom: 16,
-          animation: "fadeInUp 0.6s ease-out 0.4s both",
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#94a3b8", marginBottom: 12 }}>
-            🔔 סיפי התראה בגלאי גזים
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div style={{
-              padding: 12, borderRadius: 12,
-              background: "linear-gradient(135deg, rgba(251,191,36,0.1), rgba(251,191,36,0.03))",
-              border: "1px solid rgba(251,191,36,0.15)",
-            }}>
-              <div style={{ fontSize: 11, color: "#fbbf24", fontWeight: 700, marginBottom: 4 }}>
-                התראה ראשונה — 10% LEL
-              </div>
-              <div style={{
-                fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
-                color: "#fbbf24",
-              }}>
-                {(gas.lel * 0.1).toFixed(2)}% vol
-              </div>
-              <div style={{ fontSize: 10, color: "#92710a" }}>
-                {(gas.lel * 0.1 * 10000).toFixed(0)} ppm
-              </div>
-            </div>
-            <div style={{
-              padding: 12, borderRadius: 12,
-              background: "linear-gradient(135deg, rgba(249,115,22,0.1), rgba(249,115,22,0.03))",
-              border: "1px solid rgba(249,115,22,0.15)",
-            }}>
-              <div style={{ fontSize: 11, color: "#fb923c", fontWeight: 700, marginBottom: 4 }}>
-                התראת פינוי — 20% LEL
-              </div>
-              <div style={{
-                fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
-                color: "#fb923c",
-              }}>
-                {(gas.lel * 0.2).toFixed(2)}% vol
-              </div>
-              <div style={{ fontSize: 10, color: "#9a3412" }}>
-                {(gas.lel * 0.2 * 10000).toFixed(0)} ppm
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Gas Comparison */}
-        <div className="glass-card" style={{
-          padding: 18, marginBottom: 20,
-          animation: "fadeInUp 0.6s ease-out 0.45s both",
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#94a3b8", marginBottom: 12 }}>
-            📊 השוואת טווחי נפיצות
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {Object.entries(GASES).filter(([k]) => k !== "general").map(([key, g]) => {
-              const isSelected = key === selectedGas;
+              { label:"% מ-LEL", value:((concentration / activeLel) * 100).toFixed(1) + "%", color: concentration >= activeLel ? "#dc2626" : "#64748b" },
+              { label:"ריכוז ב-ppm", value:(concentration * 10000).toFixed(0), color:"#3b82f6" },
+              { label:"ריכוז ב-% vol", value:concentration.toFixed(3) + "%", color:"#10b981" },
+              { label:"מרחק מ-LEL", value: concentration < activeLel ? (activeLel - concentration).toFixed(2) + "%" : concentration <= activeUel ? "בטווח!" : "+" + (concentration - activeUel).toFixed(2) + "%", color: concentration >= activeLel && concentration <= activeUel ? "#dc2626" : "#7c3aed" },
+            ].map(function(s, i) {
               return (
-                <div key={key} style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  opacity: isSelected ? 1 : 0.6,
-                  cursor: "pointer",
-                  transition: "opacity 0.2s",
-                }} onClick={() => handleGasChange(key)}>
-                  <span style={{
-                    width: 55, fontSize: 10, fontWeight: 600, color: g.color,
-                    fontFamily: "'JetBrains Mono', monospace", textAlign: "left",
-                  }}>{g.formula}</span>
-                  <div style={{
-                    flex: 1, height: 16, borderRadius: 4, background: "rgba(255,255,255,0.03)",
-                    position: "relative", overflow: "hidden", direction: "ltr",
-                  }}>
-                    <div style={{
-                      position: "absolute",
-                      left: `${g.lel}%`,
-                      width: `${Math.min(g.uel - g.lel, 100 - g.lel)}%`,
-                      top: 0, bottom: 0,
-                      background: `linear-gradient(90deg, ${g.color}80, ${g.color}40)`,
-                      borderRadius: 4,
-                      transition: "all 0.3s",
-                      border: isSelected ? `1px solid ${g.color}` : "none",
-                    }} />
-                  </div>
-                  <span style={{
-                    width: 75, fontSize: 9, color: "#64748b", textAlign: "left",
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}>
-                    {g.lel}–{g.uel}%
-                  </span>
+                <div key={i} style={{ padding:"10px 12px", borderRadius:14, background:"#f8fafc", border:"1px solid #e2e8f0", textAlign:"center" }}>
+                  <div style={{ fontSize:10, color:"#94a3b8", fontWeight:600, marginBottom:3 }}>{s.label}</div>
+                  <div style={{ fontSize:17, fontWeight:700, fontFamily:"'JetBrains Mono',monospace", color:s.color, transition:"color 0.3s" }}>{s.value}</div>
                 </div>
               );
             })}
           </div>
-          <div style={{
-            display: "flex", justifyContent: "space-between", marginTop: 6,
-            fontSize: 8, color: "#334155", fontFamily: "'JetBrains Mono', monospace",
-            direction: "ltr",
-          }}>
+        </div>
+
+        <div className="card" style={{ padding:18, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.35s both" }}>
+          <div style={{ fontSize:14, fontWeight:700, color:"#475569", marginBottom:12 }}>📋 מקרא אזורים</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {[
+              { color:"#34d399", label:"בטוח",                desc:"0 — " + (activeLel * 0.1).toFixed(2) + "%", sub:"Below 10% LEL" },
+              { color:"#fbbf24", label:"זהירות (10% LEL)",    desc:(activeLel * 0.1).toFixed(2) + "% — " + (activeLel * 0.2).toFixed(2) + "%", sub:"First alarm threshold" },
+              { color:"#fb923c", label:"אזהרה (20% LEL)",     desc:(activeLel * 0.2).toFixed(2) + "% — " + activeLel + "%", sub:"Evacuation alarm" },
+              { color:"#ef4444", label:"טווח נפיצות",         desc:activeLel + "% — " + activeUel + "%", sub:"LEL to UEL — Explosive!" },
+              { color:"#a78bfa", label:"עשיר מדי",            desc:activeUel + "% — 100%", sub:"Above UEL — too rich" },
+            ].map(function(item, i) {
+              return (
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ width:18, height:18, borderRadius:6, background:item.color, flexShrink:0, boxShadow:"0 2px 6px " + item.color + "30" }} />
+                  <div>
+                    <span style={{ fontSize:14, fontWeight:600, color:"#334155" }}>{item.label}</span>
+                    <span style={{ fontSize:12, color:"#94a3b8", marginRight:8 }}>{" — " + item.desc}</span>
+                    <div style={{ fontSize:11, color:"#94a3b8", fontFamily:"'JetBrains Mono',monospace" }}>{item.sub}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="card" style={{ padding:18, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.4s both" }}>
+          <div style={{ fontSize:14, fontWeight:700, color:"#475569", marginBottom:12 }}>🔔 סיפי התראה בגלאי גזים</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            <div style={{ padding:14, borderRadius:16, background:"#fffbeb", border:"1px solid #fde68a", textAlign:"center" }}>
+              <div style={{ fontSize:12, color:"#d97706", fontWeight:700, marginBottom:4 }}>התראה ראשונה — 10% LEL</div>
+              <div style={{ fontSize:22, fontWeight:800, fontFamily:"'JetBrains Mono',monospace", color:"#d97706" }}>{(activeLel * 0.1).toFixed(2)}%</div>
+              <div style={{ fontSize:11, color:"#b45309" }}>{(activeLel * 0.1 * 10000).toFixed(0)} ppm</div>
+              <div style={{ fontSize:10, color:"#92400e", marginTop:4 }}>📳 רטט + צליל</div>
+            </div>
+            <div style={{ padding:14, borderRadius:16, background:"#fff7ed", border:"1px solid #fed7aa", textAlign:"center" }}>
+              <div style={{ fontSize:12, color:"#ea580c", fontWeight:700, marginBottom:4 }}>התראת פינוי — 20% LEL</div>
+              <div style={{ fontSize:22, fontWeight:800, fontFamily:"'JetBrains Mono',monospace", color:"#ea580c" }}>{(activeLel * 0.2).toFixed(2)}%</div>
+              <div style={{ fontSize:11, color:"#c2410c" }}>{(activeLel * 0.2 * 10000).toFixed(0)} ppm</div>
+              <div style={{ fontSize:10, color:"#9a3412", marginTop:4 }}>📳 רטט + צליל + הבהוב</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding:18, marginBottom:20, animation:"fadeInUp 0.5s ease-out 0.45s both" }}>
+          <div style={{ fontSize:14, fontWeight:700, color:"#475569", marginBottom:12 }}>📊 השוואת טווחי נפיצות</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {Object.entries(GASES).filter(function([k]) { return k !== "general"; }).map(function([key, g]) {
+              var isSel = key === selectedGas;
+              return (
+                <div key={key} style={{
+                  display:"flex", alignItems:"center", gap:10,
+                  opacity: isSel ? 1 : 0.55, cursor:"pointer", transition:"opacity 0.2s", padding:"3px 0",
+                }} onClick={function() { handleGasChange(key); }}>
+                  <span style={{ width:55, fontSize:11, fontWeight:600, color:g.color, fontFamily:"'JetBrains Mono',monospace", textAlign:"left" }}>{g.formula}</span>
+                  <div style={{
+                    flex:1, height:20, borderRadius:6, background:"#f1f5f9",
+                    position:"relative", overflow:"hidden", direction:"ltr",
+                    border: isSel ? "1px solid " + g.color + "60" : "1px solid #e2e8f0",
+                  }}>
+                    <div style={{
+                      position:"absolute", left:g.lel + "%",
+                      width:Math.min(g.uel - g.lel, 100 - g.lel) + "%",
+                      top:0, bottom:0, background:g.color,
+                      borderRadius:4, opacity: isSel ? 0.8 : 0.5, transition:"all 0.3s",
+                    }} />
+                  </div>
+                  <span style={{ width:80, fontSize:10, color:"#94a3b8", textAlign:"left", fontFamily:"'JetBrains Mono',monospace" }}>{g.lel + "–" + g.uel + "%"}</span>
+                  <span style={{ width:50, fontSize:9, color:"#cbd5e1", fontFamily:"'JetBrains Mono',monospace" }}>{"UN" + g.un}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:8, fontSize:9, color:"#cbd5e1", fontFamily:"'JetBrains Mono',monospace", direction:"ltr" }}>
             <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{
-          textAlign: "center", padding: "16px 0",
-          animation: "fadeInUp 0.6s ease-out 0.5s both",
-        }}>
+        <div style={{ textAlign:"center", padding:"12px 0", animation:"fadeInUp 0.5s ease-out 0.5s both" }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "8px 20px", borderRadius: 12,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            display:"inline-flex", alignItems:"center", gap:8,
+            padding:"10px 24px", borderRadius:14,
+            background:"rgba(255,255,255,0.75)", border:"1px solid #e2e8f0",
+            boxShadow:"0 2px 8px rgba(0,0,0,0.04)",
           }}>
-            <span style={{ fontSize: 14 }}>🧑‍🚒</span>
-            <span style={{ fontSize: 12, color: "#64748b" }}>
-              פותח ע&quot;י <span style={{ color: "#94a3b8", fontWeight: 600 }}>רועי צוקרמן</span>
+            <span style={{ fontSize:16 }}>🧑‍🚒</span>
+            <span style={{ fontSize:13, color:"#64748b" }}>
+              {"פותח ע\"י "}<span style={{ color:"#334155", fontWeight:700 }}>רועי צוקרמן</span>
             </span>
           </div>
-          <div style={{
-            fontSize: 10, color: "#334155", marginTop: 8,
-          }}>
-            כלי חינוכי — אין להסתמך עליו כתחליף לגלאי גזים מקצועיים
-          </div>
+          <div style={{ fontSize:11, color:"#94a3b8", marginTop:8 }}>כלי חינוכי — אין להסתמך עליו כתחליף לגלאי גזים מקצועיים</div>
         </div>
       </div>
     </div>
