@@ -49,28 +49,30 @@ const ZOOM_LEVELS = [
 
 function playAlarm10() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 880; o.type = "sine";
-    g.gain.setValueAtTime(0.3, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.4);
+    var ctx = new AudioContext();
+    for (var i = 0; i < 3; i++) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; o.type = "sine";
+      g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.8);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.8 + 0.5);
+      o.start(ctx.currentTime + i * 0.8); o.stop(ctx.currentTime + i * 0.8 + 0.5);
+    }
   } catch(e) {}
 }
 
 function playAlarm20() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    for (let i = 0; i < 3; i++) {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+    var ctx = new AudioContext();
+    for (var i = 0; i < 8; i++) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
       o.frequency.value = 1200; o.type = "square";
-      g.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.2);
-      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.15);
-      o.start(ctx.currentTime + i * 0.2); o.stop(ctx.currentTime + i * 0.2 + 0.15);
+      g.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.35);
+      g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.35 + 0.2);
+      o.start(ctx.currentTime + i * 0.35); o.stop(ctx.currentTime + i * 0.35 + 0.2);
     }
   } catch(e) {}
 }
@@ -110,16 +112,16 @@ export default function Home() {
 
     if (at10 && !prev10.current) {
       playAlarm10();
-      tryVibrate([200]);
+      tryVibrate([300, 100, 300, 100, 300]);
       setShowAlert10(true);
-      setTimeout(function() { setShowAlert10(false); }, 2000);
+      setTimeout(function() { setShowAlert10(false); }, 3000);
     }
     if (at20 && !prev20.current) {
       playAlarm20();
-      tryVibrate([100, 50, 100, 50, 300]);
+      tryVibrate([200, 50, 200, 50, 200, 50, 500, 100, 500]);
       setFlashScreen(true);
       setShowAlert20(true);
-      setTimeout(function() { setFlashScreen(false); setShowAlert20(false); }, 2500);
+      setTimeout(function() { setFlashScreen(false); setShowAlert20(false); }, 3500);
     }
     prev10.current = at10;
     prev20.current = at20;
@@ -282,7 +284,7 @@ export default function Home() {
       {showAlert10 && (
         <div style={{
           position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
-          padding:"16px 24px", borderRadius:16, maxWidth:420, width:"90%",
+          padding:"16px 24px", borderRadius:16, maxWidth:440, width:"90%",
           background:"linear-gradient(135deg, #fef3c7, #fffbeb)",
           border:"2px solid #f59e0b",
           boxShadow:"0 8px 32px rgba(245,158,11,0.3)",
@@ -291,18 +293,15 @@ export default function Home() {
         }}>
           <span style={{ fontSize:28, flexShrink:0 }}>⚠️</span>
           <div>
-            <div style={{ fontSize:16, fontWeight:700, color:"#92400e", marginBottom:6 }}>חציית 10% LEL!</div>
-            <div style={{ fontSize:12, color:"#b45309", lineHeight:1.7 }}>
-              • השלם מיגון בחבישת מסיכת מנ&quot;פ<br/>
-              • נתק והרחק מרחוק מקורות הצתה
-            </div>
+            <div style={{ fontSize:16, fontWeight:700, color:"#92400e", marginBottom:4 }}>חציית 10% LEL!</div>
+            <div style={{ fontSize:12, color:"#b45309" }}>גלול למטה לנוהל פעולה מלא</div>
           </div>
         </div>
       )}
       {showAlert20 && (
         <div style={{
           position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
-          padding:"16px 24px", borderRadius:16, maxWidth:420, width:"90%",
+          padding:"16px 24px", borderRadius:16, maxWidth:440, width:"90%",
           background:"linear-gradient(135deg, #fee2e2, #fef2f2)",
           border:"2px solid #ef4444",
           boxShadow:"0 8px 32px rgba(239,68,68,0.3)",
@@ -311,11 +310,8 @@ export default function Home() {
         }}>
           <span style={{ fontSize:28, flexShrink:0 }}>🚨</span>
           <div>
-            <div style={{ fontSize:16, fontWeight:700, color:"#991b1b", marginBottom:6 }}>חציית 20% LEL — פינוי מיידי!</div>
-            <div style={{ fontSize:12, color:"#dc2626", lineHeight:1.7 }}>
-              1. התרחקות מיידית מהמקום<br/>
-              2. וידוא ניתוק מרחוק של כלל מקורות ההצתה
-            </div>
+            <div style={{ fontSize:16, fontWeight:700, color:"#991b1b", marginBottom:4 }}>חציית 20% LEL — סכנה!</div>
+            <div style={{ fontSize:12, color:"#dc2626" }}>גלול למטה לנוהל פעולה מלא</div>
           </div>
         </div>
       )}
@@ -576,9 +572,9 @@ export default function Home() {
               </div>
               <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7 }}>
                 {zone === "safe" && "קיימת דליפת גז דליק, אין סכנת התלקחות. המשך ניטור למציאת המקור."}
-                {zone === "caution" && "חצית סף 10% LEL — השלם מיגון בחבישת מסיכת מנ\"פ. נתק והרחק מרחוק מקורות הצתה."}
-                {zone === "warning" && "חצית סף 20% LEL — התרחקות מיידית מהמקום! וידוא ניתוק מרחוק של כלל מקורות ההצתה."}
-                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! התרחקות מיידית מהמקום. וידוא ניתוק מרחוק של כלל מקורות ההצתה."}
+                {zone === "caution" && "חצית סף 10% LEL — בצע נוהל פעולה לריכוז 10% LEL (ראה למטה)."}
+                {zone === "warning" && "חצית סף 20% LEL — בצע נוהל פעולה לריכוז 20% LEL (ראה למטה)."}
+                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! בצע נוהל פעולה לריכוז 20% LEL (ראה למטה)."}
                 {zone === "explosive" && "⚠ אתה בטווח הנפיצות! סכנת חיים מיידית — כל ניצוץ עלול לגרום לפיצוץ! שים לב: גלאי 4 גזים שברשותך אינו מסוגל למדוד ערכי נפיצות מעל ל-LEL."}
                 {zone === "rich" && "מעל גבול הנפיצות העליון. עדיין מסוכן — תנאים עלולים להשתנות! שים לב: גלאי 4 גזים שברשותך אינו מסוגל למדוד ערכי נפיצות מעל ל-LEL."}
               </div>
@@ -641,6 +637,83 @@ export default function Home() {
               <div style={{ fontSize:11, color:"#c2410c" }}>{(activeLel * 0.2 * 10000).toFixed(0)} ppm</div>
               <div style={{ fontSize:10, color:"#9a3412", marginTop:4 }}>📳 רטט + צליל + הבהוב</div>
             </div>
+          </div>
+        </div>
+
+        {/* Operational Procedures */}
+        <div className="card" style={{
+          padding:20, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.42s both",
+          border: (zone === "caution" || zone === "warning" || zone === "preLel") ? "2px solid #f59e0b" : undefined,
+          background: zone === "caution" ? "rgba(254,243,199,0.5)" : undefined,
+        }}>
+          <div style={{ fontSize:15, fontWeight:700, color:"#d97706", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:20 }}>⚠️</span>
+            {"נוהל פעולה — חציית 10% LEL"}
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {[
+              { num:"1", text:"בידוד זירה", icon:"🚧" },
+              { num:"2", text:"מניעת יצירת ניצוץ", icon:"⚡" },
+              { num:"3", text:'ניתוק הספקת גז', icon:"🔧" },
+              { num:"4", text:'אוורור חלל סגור ע"י פתיחת חלונות', icon:"🪟" },
+              { num:"5", text:"הזמנת טכנאי גז", icon:"📞" },
+            ].map(function(step, i) {
+              return (
+                <div key={i} style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding:"10px 14px", borderRadius:14,
+                  background:"#fffbeb", border:"1px solid #fde68a",
+                }}>
+                  <span style={{ fontSize:18 }}>{step.icon}</span>
+                  <span style={{
+                    width:24, height:24, borderRadius:8, background:"#f59e0b",
+                    color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:13, fontWeight:800, flexShrink:0,
+                  }}>{step.num}</span>
+                  <span style={{ fontSize:14, fontWeight:600, color:"#92400e" }}>{step.text}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="card" style={{
+          padding:20, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.44s both",
+          border: (zone === "warning" || zone === "preLel") ? "2px solid #ef4444" : undefined,
+          background: (zone === "warning" || zone === "preLel") ? "rgba(254,226,226,0.5)" : undefined,
+        }}>
+          <div style={{ fontSize:15, fontWeight:700, color:"#dc2626", marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:20 }}>🚨</span>
+            {"נוהל פעולה — חציית 20% LEL"}
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {[
+              { num:"1", text:"בידוד זירה", icon:"🚧" },
+              { num:"2", text:"השלמת מיגון נשימתי", icon:"😷" },
+              { num:"3", text:"מניעת יצירת ניצוץ", icon:"⚡" },
+              { num:"4", text:'ניתוק הספקת גז', icon:"🔧" },
+              { num:"5", text:"פריסת קו מים בהספק 250 ל\'/דק'", icon:"🚒" },
+              { num:"6", text:'אוורור מבוקר ע"י פתיחת חלונות (ושימוש מפוח מוגן נפיצות)', icon:"🪟" },
+              { num:"7", text:'דילול ענן ע"י ריסוס קל של מים', icon:"💧" },
+              { num:"8", text:"ניתוק חשמל מרחוק", icon:"🔌" },
+              { num:"9", text:"הזמנת טכנאי גז", icon:"📞" },
+            ].map(function(step, i) {
+              return (
+                <div key={i} style={{
+                  display:"flex", alignItems:"center", gap:12,
+                  padding:"10px 14px", borderRadius:14,
+                  background:"#fef2f2", border:"1px solid #fecaca",
+                }}>
+                  <span style={{ fontSize:18 }}>{step.icon}</span>
+                  <span style={{
+                    width:24, height:24, borderRadius:8, background:"#ef4444",
+                    color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:13, fontWeight:800, flexShrink:0,
+                  }}>{step.num}</span>
+                  <span style={{ fontSize:14, fontWeight:600, color:"#991b1b" }}>{step.text}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
