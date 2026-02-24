@@ -161,8 +161,11 @@ export default function Home() {
 
   var handleManualSubmit = function() {
     var v = parseFloat(manualInput);
-    if (!isNaN(v) && v >= minScale && v <= maxScale) {
-      setConcentration(v);
+    if (!isNaN(v) && v >= 0 && v <= 100) {
+      var volPct = (v / 100) * activeLel;
+      if (volPct >= minScale && volPct <= maxScale) {
+        setConcentration(volPct);
+      }
     }
     setManualInput("");
   };
@@ -279,34 +282,40 @@ export default function Home() {
       {showAlert10 && (
         <div style={{
           position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
-          padding:"14px 28px", borderRadius:16,
+          padding:"16px 24px", borderRadius:16, maxWidth:420, width:"90%",
           background:"linear-gradient(135deg, #fef3c7, #fffbeb)",
           border:"2px solid #f59e0b",
           boxShadow:"0 8px 32px rgba(245,158,11,0.3)",
           animation:"alertSlideIn 0.3s ease-out",
-          display:"flex", alignItems:"center", gap:10, direction:"rtl",
+          display:"flex", alignItems:"flex-start", gap:12, direction:"rtl",
         }}>
-          <span style={{ fontSize:24 }}>⚠️</span>
+          <span style={{ fontSize:28, flexShrink:0 }}>⚠️</span>
           <div>
-            <div style={{ fontSize:15, fontWeight:700, color:"#92400e" }}>חציית 10% LEL!</div>
-            <div style={{ fontSize:12, color:"#b45309" }}>התראה ראשונה — חקור מקור דליפה</div>
+            <div style={{ fontSize:16, fontWeight:700, color:"#92400e", marginBottom:6 }}>חציית 10% LEL!</div>
+            <div style={{ fontSize:12, color:"#b45309", lineHeight:1.7 }}>
+              • השלם מיגון בחבישת מסיכת מנ&quot;פ<br/>
+              • נתק והרחק מרחוק מקורות הצתה
+            </div>
           </div>
         </div>
       )}
       {showAlert20 && (
         <div style={{
           position:"fixed", top:20, left:"50%", transform:"translateX(-50%)", zIndex:1000,
-          padding:"14px 28px", borderRadius:16,
+          padding:"16px 24px", borderRadius:16, maxWidth:420, width:"90%",
           background:"linear-gradient(135deg, #fee2e2, #fef2f2)",
           border:"2px solid #ef4444",
           boxShadow:"0 8px 32px rgba(239,68,68,0.3)",
           animation:"alertSlideIn 0.3s ease-out, alertPulse 0.5s ease-in-out 3",
-          display:"flex", alignItems:"center", gap:10, direction:"rtl",
+          display:"flex", alignItems:"flex-start", gap:12, direction:"rtl",
         }}>
-          <span style={{ fontSize:24 }}>🚨</span>
+          <span style={{ fontSize:28, flexShrink:0 }}>🚨</span>
           <div>
-            <div style={{ fontSize:15, fontWeight:700, color:"#991b1b" }}>חציית 20% LEL — פינוי!</div>
-            <div style={{ fontSize:12, color:"#dc2626" }}>הפעל אוורור, סגור מקורות הצתה!</div>
+            <div style={{ fontSize:16, fontWeight:700, color:"#991b1b", marginBottom:6 }}>חציית 20% LEL — פינוי מיידי!</div>
+            <div style={{ fontSize:12, color:"#dc2626", lineHeight:1.7 }}>
+              1. התרחקות מיידית מהמקום<br/>
+              2. וידוא ניתוק מרחוק של כלל מקורות ההצתה
+            </div>
           </div>
         </div>
       )}
@@ -418,14 +427,29 @@ export default function Home() {
             <div style={{ marginTop:12, display:"flex", alignItems:"center", gap:16, flexWrap:"wrap", animation:"slideDown 0.25s ease-out" }}>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <label style={{ fontSize:13, fontWeight:600, color:"#dc2626" }}>LEL %</label>
-                <input type="number" className="num-input" value={customLel} min={0.1} max={99} step={0.1}
-                  onChange={function(e) { setCustomLel(parseFloat(e.target.value) || 0); setConcentration(0); prev10.current=false; prev20.current=false; }} />
+                <input type="number" className="num-input" value={customLel} min={0.1} max={customUel - 0.1} step={0.1}
+                  onChange={function(e) {
+                    var v = parseFloat(e.target.value) || 0;
+                    if (v >= customUel) v = customUel - 0.1;
+                    if (v < 0.1) v = 0.1;
+                    setCustomLel(Math.round(v * 10) / 10);
+                    setConcentration(0); prev10.current=false; prev20.current=false;
+                  }} />
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <label style={{ fontSize:13, fontWeight:600, color:"#7c3aed" }}>UEL %</label>
-                <input type="number" className="num-input" value={customUel} min={0.2} max={100} step={0.1}
-                  onChange={function(e) { setCustomUel(parseFloat(e.target.value) || 0); setConcentration(0); prev10.current=false; prev20.current=false; }} />
+                <input type="number" className="num-input" value={customUel} min={customLel + 0.1} max={100} step={0.1}
+                  onChange={function(e) {
+                    var v = parseFloat(e.target.value) || 0;
+                    if (v <= customLel) v = customLel + 0.1;
+                    if (v > 100) v = 100;
+                    setCustomUel(Math.round(v * 10) / 10);
+                    setConcentration(0); prev10.current=false; prev20.current=false;
+                  }} />
               </div>
+              {customLel >= customUel && (
+                <div style={{ fontSize:12, color:"#dc2626", fontWeight:600 }}>⚠ LEL חייב להיות קטן מ-UEL</div>
+              )}
             </div>
           )}
         </div>
@@ -445,7 +469,7 @@ export default function Home() {
             })}
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-            <input type="text" className="manual-input" placeholder="הזן % vol"
+            <input type="text" className="manual-input" placeholder="הזן % LEL"
               value={manualInput} onChange={function(e) { setManualInput(e.target.value); }}
               onKeyDown={function(e) { if (e.key === "Enter") handleManualSubmit(); }}
               style={{ direction:"ltr" }}
@@ -521,31 +545,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{
-          display:"flex", gap:3, marginBottom:12, borderRadius:14, overflow:"hidden",
-          animation:"fadeInUp 0.5s ease-out 0.25s both", height:30, direction:"ltr",
-          boxShadow:"0 2px 8px rgba(0,0,0,0.05)",
-        }}>
-          {[
-            { label:"בטוח",   color:"#34d399", width:lel10Pct },
-            { label:"זהירות", color:"#fbbf24", width:lel20Pct - lel10Pct },
-            { label:"אזהרה",  color:"#fb923c", width:lelPct - lel20Pct },
-            { label:"נפיץ!",  color:"#ef4444", width:uelPct - lelPct },
-            { label:"עשיר",   color:"#a78bfa", width:100 - uelPct },
-          ].map(function(s, i) {
-            return (
-              <div key={i} style={{
-                width:Math.max(s.width, 0) + "%", background:s.color, display:"flex",
-                alignItems:"center", justifyContent:"center",
-                fontSize:10, fontWeight:700, color:"white",
-                overflow:"hidden", whiteSpace:"nowrap", transition:"all 0.4s ease",
-                textShadow:"0 1px 2px rgba(0,0,0,0.15)",
-              }}>
-                {s.width > 8 ? s.label : ""}
-              </div>
-            );
-          })}
-        </div>
 
         <div className="card" style={{
           padding:20, marginBottom:14, animation:"fadeInUp 0.5s ease-out 0.3s both",
@@ -576,12 +575,12 @@ export default function Home() {
                 {fmt(concentration)}
               </div>
               <div style={{ fontSize:13, color:"#64748b", lineHeight:1.7 }}>
-                {zone === "safe" && "ריכוז נמוך — אין סכנת התלקחות. המשך ניטור שוטף."}
-                {zone === "caution" && "חצית סף 10% LEL — התראה ראשונה בגלאי גזים. חקור מקור דליפה."}
-                {zone === "warning" && "חצית סף 20% LEL — התראת פינוי! הפעל אוורור, סגור מקורות הצתה."}
-                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! פנה מיידית וטפל ממרחק בטוח."}
-                {zone === "explosive" && "⚠ אתה בטווח הנפיצות! סכנת חיים מיידית — כל ניצוץ עלול לגרום לפיצוץ!"}
-                {zone === "rich" && "מעל גבול הנפיצות העליון. עדיין מסוכן — תנאים עלולים להשתנות!"}
+                {zone === "safe" && "קיימת דליפת גז דליק, אין סכנת התלקחות. המשך ניטור למציאת המקור."}
+                {zone === "caution" && "חצית סף 10% LEL — השלם מיגון בחבישת מסיכת מנ\"פ. נתק והרחק מרחוק מקורות הצתה."}
+                {zone === "warning" && "חצית סף 20% LEL — התרחקות מיידית מהמקום! וידוא ניתוק מרחוק של כלל מקורות ההצתה."}
+                {zone === "preLel" && "מתקרב לגבול התחתון של הנפיצות! התרחקות מיידית מהמקום. וידוא ניתוק מרחוק של כלל מקורות ההצתה."}
+                {zone === "explosive" && "⚠ אתה בטווח הנפיצות! סכנת חיים מיידית — כל ניצוץ עלול לגרום לפיצוץ! שים לב: גלאי 4 גזים שברשותך אינו מסוגל למדוד ערכי נפיצות מעל ל-LEL."}
+                {zone === "rich" && "מעל גבול הנפיצות העליון. עדיין מסוכן — תנאים עלולים להשתנות! שים לב: גלאי 4 גזים שברשותך אינו מסוגל למדוד ערכי נפיצות מעל ל-LEL."}
               </div>
             </div>
           </div>
